@@ -7,41 +7,55 @@ import wave
 SAMPLE_RATE = 44100
 
 NOTE_FREQUENCIES = {
-    'C': 261.63, 'C#': 277.18, 'D': 293.66, 'D#': 311.13,
-    'E': 329.63, 'F': 349.23, 'F#': 369.99, 'G': 392.00,
-    'G#': 415.30, 'A': 440.00, 'A#': 466.16, 'B': 493.88
+    "C": 261.63,
+    "C#": 277.18,
+    "D": 293.66,
+    "D#": 311.13,
+    "E": 329.63,
+    "F": 349.23,
+    "F#": 369.99,
+    "G": 392.00,
+    "G#": 415.30,
+    "A": 440.00,
+    "A#": 466.16,
+    "B": 493.88,
 }
 
 ROOT_NOTE_SEQUENCE = {
-    'I': 'C', 'II': 'D', 'III': 'E',
-    'IV': 'F', 'V': 'G', 'VI': 'A', 'VII': 'B'
+    "I": "C",
+    "II": "D",
+    "III": "E",
+    "IV": "F",
+    "V": "G",
+    "VI": "A",
+    "VII": "B",
 }
 
 MOOD_PROGRESSIONS = {
     "epic": [
-        ['I', 'V', 'vi', 'IV'],
-        ['i', 'VII', 'VI', 'VII'],
-        ['IV', 'V', 'iii', 'vi'],
-        ['i', 'iv', 'V', 'i']
+        ["I", "V", "vi", "IV"],
+        ["i", "VII", "VI", "VII"],
+        ["IV", "V", "iii", "vi"],
+        ["i", "iv", "V", "i"],
     ],
     "sad": [
-        ['vi', 'IV', 'I', 'V'],
-        ['i', 'iv', 'i', 'V'],
-        ['ii', 'v', 'I', 'vi'],
-        ['i', 'VII', 'iv', 'i']
+        ["vi", "IV", "I", "V"],
+        ["i", "iv", "i", "V"],
+        ["ii", "v", "I", "vi"],
+        ["i", "VII", "iv", "i"],
     ],
     "cool": [
-        ['ii', 'V', 'I', 'vi'],
-        ['IV', 'I', 'ii', 'V'],
-        ['iii', 'vi', 'ii', 'V'],
-        ['I', 'VII', 'IV', 'I']
+        ["ii", "V", "I", "vi"],
+        ["IV", "I", "ii", "V"],
+        ["iii", "vi", "ii", "V"],
+        ["I", "VII", "IV", "I"],
     ],
     "happy": [
-        ['I', 'IV', 'V', 'IV'],
-        ['I', 'vi', 'IV', 'V'],
-        ['IV', 'I', 'V', 'I'],
-        ['I', 'V', 'vi', 'iii']
-    ]
+        ["I", "IV", "V", "IV"],
+        ["I", "vi", "IV", "V"],
+        ["IV", "I", "V", "I"],
+        ["I", "V", "vi", "iii"],
+    ],
 }
 
 
@@ -70,7 +84,9 @@ def generate_wave(frequency, duration, amplitude, wave_type):
     elif wave_type == "saw":
         form = amplitude * (2 * (t * frequency - np.floor(0.5 + t * frequency)))
     elif wave_type == "triangle":
-        form = amplitude * (2 * np.abs(2 * (t * frequency - np.floor(0.5 + t * frequency))) - 1)
+        form = amplitude * (
+            2 * np.abs(2 * (t * frequency - np.floor(0.5 + t * frequency))) - 1
+        )
     elif wave_type == "square":
         form = amplitude * np.sign(np.sin(2 * np.pi * frequency * t))
     else:
@@ -89,9 +105,16 @@ def apply_adsr(wave, attack, decay, sustain, release):
     if attack_samples > 0:
         adsr[:attack_samples] = np.linspace(0, 1, attack_samples)
     if decay_samples > 0:
-        adsr[attack_samples:attack_samples + decay_samples] = np.linspace(1, sustain, decay_samples)
+        adsr[attack_samples : attack_samples + decay_samples] = np.linspace(
+            1, sustain, decay_samples
+        )
     if sustain_samples > 0:
-        adsr[attack_samples + decay_samples:attack_samples + decay_samples + sustain_samples] = sustain
+        adsr[
+            attack_samples
+            + decay_samples : attack_samples
+            + decay_samples
+            + sustain_samples
+        ] = sustain
     if release_samples > 0:
         adsr[-release_samples:] = np.linspace(sustain, 0, release_samples)
 
@@ -109,22 +132,45 @@ def generate_chord(notes, chord_duration, amplitude, wave_type, adsr_params):
 
 
 def transpose_progression(key, chords):
-    transpose = list(NOTE_FREQUENCIES.keys()).index(key) - list(NOTE_FREQUENCIES.keys()).index("C")
+    transpose = list(NOTE_FREQUENCIES.keys()).index(key) - list(
+        NOTE_FREQUENCIES.keys()
+    ).index("C")
     return [
-        [list(NOTE_FREQUENCIES.keys())[(list(NOTE_FREQUENCIES.keys()).index(note) + transpose) % 12] for note in
-         chord] for chord in chords]
+        [
+            list(NOTE_FREQUENCIES.keys())[
+                (list(NOTE_FREQUENCIES.keys()).index(note) + transpose) % 12
+            ]
+            for note in chord
+        ]
+        for chord in chords
+    ]
 
 
 def adjust_chord(frequencies, tone_multiplier):
     root_note = (NOTE_FREQUENCIES[frequencies[0]]) * tone_multiplier
     second_note_frequency = NOTE_FREQUENCIES[frequencies[2]] * tone_multiplier
-    second_note = second_note_frequency * 2 if second_note_frequency < root_note else second_note_frequency
+    second_note = (
+        second_note_frequency * 2
+        if second_note_frequency < root_note
+        else second_note_frequency
+    )
     third_note_frequency = NOTE_FREQUENCIES[frequencies[1]] * tone_multiplier * 2
-    third_note = third_note_frequency * 2 if third_note_frequency < second_note else third_note_frequency
+    third_note = (
+        third_note_frequency * 2
+        if third_note_frequency < second_note
+        else third_note_frequency
+    )
     return [root_note, second_note, third_note]
 
 
-def generate_progression(bpm, mood, key, tone, wave_type, adsr_params, ):
+def generate_progression(
+    bpm,
+    mood,
+    key,
+    tone,
+    wave_type,
+    adsr_params,
+):
     amplitude = 0.3
     duration = 4
     chord_duration = 60 / bpm * duration
@@ -143,18 +189,24 @@ def generate_progression(bpm, mood, key, tone, wave_type, adsr_params, ):
     audio = []
     for chord in chords:
         adjusted_chord = adjust_chord(chord, tone_multiplier)
-        audio.extend(generate_chord(adjusted_chord, chord_duration, amplitude, wave_type, adsr_params))
+        audio.extend(
+            generate_chord(
+                adjusted_chord, chord_duration, amplitude, wave_type, adsr_params
+            )
+        )
 
     audio = np.array(audio)
     return audio
 
 
 def save_wav(filename, data):
-    with wave.open(filename, 'w') as wav_file:
+    with wave.open(filename, "w") as wav_file:
         wav_file.setnchannels(1)  # mono
         wav_file.setsampwidth(2)  # 16 bit
         wav_file.setframerate(SAMPLE_RATE)
-        wav_file.writeframes(struct.pack('<' + ('h' * len(data)), *(np.int16(data * 32767))))
+        wav_file.writeframes(
+            struct.pack("<" + ("h" * len(data)), *(np.int16(data * 32767)))
+        )
 
 
 def take_value(arg, values):
@@ -162,18 +214,42 @@ def take_value(arg, values):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Chord progression generation and recording to a WAV file.")
+    parser = argparse.ArgumentParser(
+        description="Chord progression generation and recording to a WAV file."
+    )
     parser.add_argument("--bpm", type=int, default=120, help="Beats per minute(BPM).")
-    parser.add_argument("--mood", type=str, choices=MOOD_PROGRESSIONS.keys(),
-                        help="Mood of the progression.")
-    parser.add_argument("--key", type=str, choices=NOTE_FREQUENCIES.keys(),
-                        help="Scale the of progression.")
-    parser.add_argument("--tone", type=str, choices=["high", "normal", "low"], default="normal",
-                        help="Tone of the progression.")
-    parser.add_argument("--wave", type=str, choices=["sine", "saw", "triangle", "square"],
-                        help="Wave type.")
-    parser.add_argument("--adsr", type=float, nargs=4, default=(0.1, 0.3, 0.75, 0.15),
-                        help="ADSR Envelope: Attack(A), decay(D), sustain(S), release(R).")
+    parser.add_argument(
+        "--mood",
+        type=str,
+        choices=MOOD_PROGRESSIONS.keys(),
+        help="Mood of the progression.",
+    )
+    parser.add_argument(
+        "--key",
+        type=str,
+        choices=NOTE_FREQUENCIES.keys(),
+        help="Scale the of progression.",
+    )
+    parser.add_argument(
+        "--tone",
+        type=str,
+        choices=["high", "normal", "low"],
+        default="normal",
+        help="Tone of the progression.",
+    )
+    parser.add_argument(
+        "--wave",
+        type=str,
+        choices=["sine", "saw", "triangle", "square"],
+        help="Wave type.",
+    )
+    parser.add_argument(
+        "--adsr",
+        type=float,
+        nargs=4,
+        default=(0.1, 0.3, 0.75, 0.15),
+        help="ADSR Envelope: Attack(A), decay(D), sustain(S), release(R).",
+    )
     parser.add_argument("--output", type=str, help="File name.", default="clip.wav")
 
     args = parser.parse_args()
